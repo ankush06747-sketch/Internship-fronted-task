@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calc — Simple Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg1: #1a1030;
+    --bg2: #0d1224;
+    --panel: rgba(255,255,255,0.06);
+    --panel-border: rgba(255,255,255,0.12);
+    --key: rgba(255,255,255,0.07);
+    --key-hover: rgba(255,255,255,0.13);
+    --key-text: #f2effa;
+    --op-a: #ff8a5c;
+    --op-b: #ff5c8a;
+    --op-text: #241021;
+    --func: rgba(139,124,255,0.22);
+    --func-hover: rgba(139,124,255,0.34);
+    --func-text: #cdc4ff;
+    --display-text: #ffffff;
+    --display-sub: #a99bd6;
+    --glow: rgba(255,120,150,.35);
+    --shadow: rgba(0,0,0,.5);
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  :root[data-theme="light"] {
+    --bg1: #f0e9ff;
+    --bg2: #dcecff;
+    --panel: rgba(255,255,255,0.55);
+    --panel-border: rgba(255,255,255,0.9);
+    --key: rgba(255,255,255,0.55);
+    --key-hover: rgba(255,255,255,0.85);
+    --key-text: #241a3d;
+    --op-a: #ff7a4d;
+    --op-b: #ff4d80;
+    --op-text: #ffffff;
+    --func: rgba(139,124,255,0.18);
+    --func-hover: rgba(139,124,255,0.3);
+    --func-text: #5b4bbf;
+    --display-text: #201638;
+    --display-sub: #7a6ea3;
+    --glow: rgba(255,90,130,.25);
+    --shadow: rgba(60,40,90,.18);
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg1: #f0e9ff;
+      --bg2: #dcecff;
+      --panel: rgba(255,255,255,0.55);
+      --panel-border: rgba(255,255,255,0.9);
+      --key: rgba(255,255,255,0.55);
+      --key-hover: rgba(255,255,255,0.85);
+      --key-text: #241a3d;
+      --op-a: #ff7a4d;
+      --op-b: #ff4d80;
+      --op-text: #ffffff;
+      --func: rgba(139,124,255,0.18);
+      --func-hover: rgba(139,124,255,0.3);
+      --func-text: #5b4bbf;
+      --display-text: #201638;
+      --display-sub: #7a6ea3;
+      --glow: rgba(255,90,130,.25);
+      --shadow: rgba(60,40,90,.18);
+    }
+  }
+  * { box-sizing: border-box; }
+  html { height: 100%; scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    height: 100%;
+    margin: 0;
+    background:
+      radial-gradient(circle at 15% 15%, rgba(255,120,150,.25), transparent 45%),
+      radial-gradient(circle at 85% 85%, rgba(120,150,255,.22), transparent 45%),
+      linear-gradient(160deg, var(--bg1), var(--bg2));
+    color: var(--key-text);
+    font-family: 'Manrope', system-ui, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+  }
+
+  .device {
+    width: 100%;
+    max-width: 360px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    border-radius: 28px;
+    padding: 22px;
+    box-shadow: 0 30px 70px var(--shadow), inset 0 1px 0 rgba(255,255,255,.15);
+  }
+
+  .label {
+    font-size: 0.7rem;
+    letter-spacing: .18em;
+    color: var(--display-sub);
+    margin: 0 4px 10px;
+    font-weight: 700;
+  }
+
+  .display {
+    padding: 22px 16px 14px;
+    text-align: right;
+    min-height: 96px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    overflow: hidden;
+  }
+  .display .history {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+    color: var(--display-sub);
+    min-height: 1.3em;
+    white-space: nowrap;
+    overflow-x: auto;
+  }
+  .display .current {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(2.1rem, 9vw, 2.7rem);
+    font-weight: 500;
+    color: var(--display-text);
+    white-space: nowrap;
+    overflow-x: auto;
+    transition: opacity .15s ease;
+    text-shadow: 0 0 24px var(--glow);
+  }
+
+  .pad {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 14px;
+  }
+
+  button.key {
+    font-family: 'Manrope', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+    border-radius: 16px;
+    padding: 18px 0;
+    background: var(--key);
+    color: var(--key-text);
+    cursor: pointer;
+    transition: background .15s ease, transform .08s ease, box-shadow .15s ease, border-color .15s ease;
+    -webkit-tap-highlight-color: transparent;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.12);
+  }
+  button.key:hover { background: var(--key-hover); border-color: rgba(255,255,255,.15); }
+  button.key:active { transform: scale(.92); }
+
+  button.key.func { background: var(--func); color: var(--func-text); }
+  button.key.func:hover { background: var(--func-hover); }
+
+  button.key.op, button.key.equals {
+    background: linear-gradient(135deg, var(--op-a), var(--op-b));
+    color: var(--op-text);
+    font-weight: 700;
+    box-shadow: 0 8px 20px var(--glow);
+  }
+  button.key.op:hover, button.key.equals:hover {
+    box-shadow: 0 10px 26px var(--glow);
+    filter: brightness(1.06);
+  }
+  button.key.op:active, button.key.equals:active {
+    transform: scale(.92);
+    box-shadow: 0 4px 12px var(--glow);
+  }
+
+  button.key.zero { grid-column: span 2; }
+
+  button.key.pressed {
+    background: linear-gradient(135deg, var(--op-a), var(--op-b));
+    color: var(--op-text);
+  }
+
+  @media (max-width: 340px) {
+    button.key { padding: 15px 0; font-size: 1.05rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="device">
+  <p class="label">CALC</p>
+  <div class="display">
+    <div class="history" id="history">&nbsp;</div>
+    <div class="current" id="current">0</div>
+  </div>
+
+  <div class="pad">
+    <button class="key func" data-action="clear">AC</button>
+    <button class="key func" data-action="backspace">⌫</button>
+    <button class="key func" data-action="percent">%</button>
+    <button class="key op" data-action="operator" data-op="÷">÷</button>
+
+    <button class="key" data-action="number" data-num="7">7</button>
+    <button class="key" data-action="number" data-num="8">8</button>
+    <button class="key" data-action="number" data-num="9">9</button>
+    <button class="key op" data-action="operator" data-op="×">×</button>
+
+    <button class="key" data-action="number" data-num="4">4</button>
+    <button class="key" data-action="number" data-num="5">5</button>
+    <button class="key" data-action="number" data-num="6">6</button>
+    <button class="key op" data-action="operator" data-op="−">−</button>
+
+    <button class="key" data-action="number" data-num="1">1</button>
+    <button class="key" data-action="number" data-num="2">2</button>
+    <button class="key" data-action="number" data-num="3">3</button>
+    <button class="key op" data-action="operator" data-op="+">+</button>
+
+    <button class="key zero" data-action="number" data-num="0">0</button>
+    <button class="key" data-action="decimal">.</button>
+    <button class="key equals" data-action="equals">=</button>
+  </div>
+</div>
+
+<script>
+  // ---- STATE ----------------------------------------------------------
+  let current = "0";      // what's shown on the main line
+  let previous = null;    // the first operand, once an operator is picked
+  let operator = null;    // '+', '−', '×', '÷'
+  let justEvaluated = false; // true right after pressing "="
+
+  const currentEl = document.getElementById("current");
+  const historyEl = document.getElementById("history");
+
+  function updateDisplay() {
+    currentEl.textContent = current;
+    historyEl.textContent = previous !== null && operator
+      ? `${previous} ${operator}`
+      : "\u00A0";
+  }
+
+  // ---- ACTIONS ----------------------------------------------------------
+  function inputNumber(num) {
+    if (justEvaluated) { current = "0"; previous = null; operator = null; justEvaluated = false; }
+    if (current === "0") current = num;
+    else if (current.length < 14) current += num;
+  }
+
+  function inputDecimal() {
+    if (justEvaluated) { current = "0"; previous = null; operator = null; justEvaluated = false; }
+    if (!current.includes(".")) current += ".";
+  }
+
+  function chooseOperator(op) {
+    // If an operator is already pending and no new digits were typed yet
+    // (current is still "0"), just swap the operator instead of evaluating —
+    // this is what fixes "pressed + by mistake, meant to press ×".
+    if (operator && previous !== null && current === "0" && !justEvaluated) {
+      operator = op;
+      updateDisplay();
+      return;
+    }
+    if (operator && previous !== null && !justEvaluated) {
+      // chain: evaluate what's pending first
+      evaluate();
+    }
+    previous = current;
+    operator = op;
+    current = "0";
+    justEvaluated = false;
+  }
+
+  function evaluate() {
+    if (operator === null || previous === null) return;
+    const a = parseFloat(previous);
+    const b = parseFloat(current);
+    let result;
+    switch (operator) {
+      case "+": result = a + b; break;
+      case "−": result = a - b; break;
+      case "×": result = a * b; break;
+      case "÷": result = b === 0 ? NaN : a / b; break;
+      default: return;
+    }
+    current = Number.isNaN(result) ? "Error" : trimResult(result);
+    previous = null;
+    operator = null;
+    justEvaluated = true;
+  }
+
+  function trimResult(num) {
+    if (!Number.isFinite(num)) return "Error";
+    let str = String(Math.round(num * 1e10) / 1e10);
+    if (str.length > 14) str = num.toExponential(6);
+    return str;
+  }
+
+  function clearAll() {
+    current = "0"; previous = null; operator = null; justEvaluated = false;
+  }
+
+  function backspace() {
+    if (justEvaluated) { clearAll(); return; }
+    current = current.length > 1 ? current.slice(0, -1) : "0";
+  }
+
+  function percent() {
+    current = trimResult(parseFloat(current) / 100);
+  }
+
+  function flashKey(el) {
+    if (!el) return;
+    el.classList.add("pressed");
+    setTimeout(() => el.classList.remove("pressed"), 120);
+  }
+
+  // ---- BUTTON CLICKS ----------------------------------------------------
+  document.querySelector(".pad").addEventListener("click", (e) => {
+    const btn = e.target.closest("button.key");
+    if (!btn) return;
+    const action = btn.dataset.action;
+    if (action === "number") inputNumber(btn.dataset.num);
+    else if (action === "decimal") inputDecimal();
+    else if (action === "operator") chooseOperator(btn.dataset.op);
+    else if (action === "equals") evaluate();
+    else if (action === "clear") clearAll();
+    else if (action === "backspace") backspace();
+    else if (action === "percent") percent();
+    updateDisplay();
+  });
+
+  // ---- KEYBOARD SUPPORT ---------------------------------------------------
+  const opMap = { "+": "+", "-": "−", "*": "×", "/": "÷" };
+  document.addEventListener("keydown", (e) => {
+    const k = e.key;
+    let selector = null;
+
+    if (k >= "0" && k <= "9") { inputNumber(k); selector = `[data-num="${k}"]`; }
+    else if (k === ".") { inputDecimal(); selector = '[data-action="decimal"]'; }
+    else if (opMap[k]) { chooseOperator(opMap[k]); selector = `[data-op="${opMap[k]}"]`; }
+    else if (k === "Enter" || k === "=") { e.preventDefault(); evaluate(); selector = '[data-action="equals"]'; }
+    else if (k === "Backspace") { backspace(); selector = '[data-action="backspace"]'; }
+    else if (k === "Escape") { clearAll(); selector = '[data-action="clear"]'; }
+    else if (k === "%") { percent(); selector = '[data-action="percent"]'; }
+    else return;
+
+    flashKey(document.querySelector(selector));
+    updateDisplay();
+  });
+
+  updateDisplay();
+</script>
+</body>
+</html>
