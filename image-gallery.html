@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Frame &amp; Light — Gallery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #16130f;
+    --bg-raised: #1f1a14;
+    --ink: #f2ece1;
+    --ink-dim: #a89d8b;
+    --line: #382f24;
+    --accent: #d9a256;
+    --accent-dim: #8a6a3a;
+    --shadow: rgba(0,0,0,.5);
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  :root[data-theme="light"] {
+    --bg: #f4efe4;
+    --bg-raised: #ffffff;
+    --ink: #241f18;
+    --ink-dim: #6d6353;
+    --line: #ded4bd;
+    --accent: #b5793a;
+    --accent-dim: #d9b47f;
+    --shadow: rgba(60,50,30,.18);
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f4efe4;
+      --bg-raised: #ffffff;
+      --ink: #241f18;
+      --ink-dim: #6d6353;
+      --line: #ded4bd;
+      --accent: #b5793a;
+      --accent-dim: #d9b47f;
+      --shadow: rgba(60,50,30,.18);
+    }
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 56px 24px 80px; }
+
+  header.page-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 18px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 28px;
+    margin-bottom: 32px;
+  }
+  .page-head h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-style: italic;
+    font-size: clamp(2rem, 5vw, 3rem);
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .page-head p {
+    margin: 6px 0 0;
+    color: var(--ink-dim);
+    font-size: 0.95rem;
+    max-width: 34ch;
+  }
+  .roll-count { font-size: 0.85rem; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+
+  /* Filters styled like a contact-sheet film strip */
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 34px;
+  }
+  .filters button {
+    font-family: inherit;
+    font-size: 0.85rem;
+    color: var(--ink-dim);
+    background: transparent;
+    border: 1px solid var(--line);
+    padding: 8px 16px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: color .25s ease, border-color .25s ease, background .25s ease;
+  }
+  .filters button:hover { color: var(--ink); border-color: var(--accent-dim); }
+  .filters button.active {
+    color: var(--bg);
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  /* Gallery grid — uneven row spans read like a real print wall, not a card kit */
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    grid-auto-rows: 130px;
+    gap: 14px;
+  }
+  figure.tile {
+    margin: 0;
+    position: relative;
+    overflow: hidden;
+    border-radius: 3px;
+    cursor: pointer;
+    grid-row: span 2;
+    background: var(--bg-raised);
+  }
+  figure.tile.tall { grid-row: span 3; }
+  figure.tile img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform .5s cubic-bezier(.2,.7,.3,1), filter .5s ease;
+  }
+  figure.tile:hover img { transform: scale(1.07); filter: saturate(1.15); }
+  figure.tile .caption {
+    position: absolute;
+    inset: auto 0 0 0;
+    padding: 14px 14px 12px;
+    background: linear-gradient(to top, rgba(10,8,5,.85), rgba(10,8,5,0));
+    color: #f2ece1;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity .35s ease, transform .35s ease;
+  }
+  figure.tile:hover .caption { opacity: 1; transform: translateY(0); }
+  figure.tile .caption .t { font-family: 'Fraunces', serif; font-size: 1.05rem; display: block; }
+  figure.tile .caption .c { font-size: 0.72rem; letter-spacing: .04em; color: #d9a256; }
+
+  .empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 0;
+    color: var(--ink-dim);
+    font-style: italic;
+    font-family: 'Fraunces', serif;
+  }
+
+  /* Lightbox */
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(8,6,4,.94);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s ease;
+    padding: env(safe-area-inset-top, 0px) 16px env(safe-area-inset-bottom, 0px);
+  }
+  .lightbox.open { opacity: 1; pointer-events: auto; }
+  .lightbox-inner {
+    max-width: min(900px, 92vw);
+    max-height: 86vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform: scale(.96);
+    transition: transform .3s ease;
+  }
+  .lightbox.open .lightbox-inner { transform: scale(1); }
+  .lightbox-inner img {
+    max-width: 100%;
+    max-height: 68vh;
+    border-radius: 4px;
+    box-shadow: 0 30px 60px var(--shadow);
+  }
+  .lightbox-caption { color: #f2ece1; text-align: center; margin-top: 16px; }
+  .lightbox-caption .t { font-family: 'Fraunces', serif; font-size: 1.3rem; }
+  .lightbox-caption .c { font-size: 0.75rem; letter-spacing: .05em; color: #d9a256; display: block; margin-top: 4px; }
+
+  .lb-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.2);
+    color: #f2ece1;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .2s ease;
+  }
+  .lb-btn:hover { background: rgba(255,255,255,.18); }
+  .lb-prev { left: 16px; }
+  .lb-next { right: 16px; }
+  .lb-close {
+    position: absolute;
+    top: calc(16px + env(safe-area-inset-top, 0px));
+    right: 16px;
+    background: transparent;
+    border: none;
+    color: #f2ece1;
+    font-size: 1.6rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 8px;
+  }
+  .lb-index { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); color: var(--ink-dim); font-size: .78rem; }
+
+  @media (max-width: 560px) {
+    .lb-btn { width: 38px; height: 38px; font-size: 1rem; }
+    .lb-prev { left: 6px; } .lb-next { right: 6px; }
+    .gallery { grid-auto-rows: 110px; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="page-head">
+    <div>
+      <h1>Frame &amp; Light</h1>
+      <p>A small gallery — filter by category, click any frame to view it full size.</p>
+    </div>
+    <span class="roll-count" id="rollCount"></span>
+  </header>
+
+  <nav class="filters" id="filters"></nav>
+
+  <section class="gallery" id="gallery" aria-label="Image gallery"></section>
+</div>
+
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer">
+  <button class="lb-close" id="lbClose" aria-label="Close">&times;</button>
+  <button class="lb-btn lb-prev" id="lbPrev" aria-label="Previous image">&#8249;</button>
+  <div class="lightbox-inner">
+    <img id="lbImg" src="" alt="">
+    <div class="lightbox-caption">
+      <span class="t" id="lbTitle"></span>
+      <span class="c" id="lbCat"></span>
+    </div>
+  </div>
+  <button class="lb-btn lb-next" id="lbNext" aria-label="Next image">&#8250;</button>
+  <div class="lb-index" id="lbIndex"></div>
+</div>
+
+<script>
+  // ---- 1. DATA -------------------------------------------------------
+  // Replace `src` with real photo URLs/paths when you have them.
+  // Placeholders below are generated SVG gradients so the page needs no
+  // external images at all.
+  function placeholder(hue1, hue2, glyph) {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+      <defs>
+        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="hsl(${hue1},55%,32%)"/>
+          <stop offset="1" stop-color="hsl(${hue2},60%,20%)"/>
+        </linearGradient>
+      </defs>
+      <rect width="400" height="300" fill="url(#g)"/>
+      <text x="200" y="172" font-size="86" text-anchor="middle" fill="rgba(255,255,255,.55)" font-family="sans-serif">${glyph}</text>
+    </svg>`;
+    return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+  }
+
+  const IMAGES = [
+    { id:1, title:"Ridgeline at Dawn",   cat:"Nature",   tall:true,  src: placeholder(150,190,"⛰") },
+    { id:2, title:"River Bend",          cat:"Nature",   tall:false, src: placeholder(160,200,"🌿") },
+    { id:3, title:"Old Pines",           cat:"Nature",   tall:false, src: placeholder(140,170,"🌲") },
+    { id:4, title:"Night Market",        cat:"Urban",    tall:true,  src: placeholder(20,340,"🏮") },
+    { id:5, title:"Glass & Steel",       cat:"Urban",    tall:false, src: placeholder(210,230,"🏙") },
+    { id:6, title:"Corner Café",         cat:"Urban",    tall:false, src: placeholder(30,10,"☕") },
+    { id:7, title:"Red Fox",             cat:"Wildlife", tall:false, src: placeholder(15,25,"🦊") },
+    { id:8, title:"Heron at Rest",       cat:"Wildlife", tall:true,  src: placeholder(195,215,"🦩") },
+    { id:9, title:"Mountain Hare",       cat:"Wildlife", tall:false, src: placeholder(0,0,"🐇") },
+    { id:10, title:"Fractured Light",    cat:"Abstract", tall:false, src: placeholder(280,320,"◈") },
+    { id:11, title:"Woven Static",       cat:"Abstract", tall:true,  src: placeholder(260,300,"◐") },
+    { id:12, title:"Slow Burn",          cat:"Abstract", tall:false, src: placeholder(10,45,"◉") },
+  ];
+
+  const CATEGORIES = ["All", ...new Set(IMAGES.map(i => i.cat))];
+
+  // ---- 2. STATE --------------------------------------------------------
+  let activeCat = "All";
+  let visible = IMAGES;      // images currently shown, respects filter
+  let lightboxIndex = -1;    // index into `visible`
+
+  // ---- 3. RENDER: FILTER BAR -------------------------------------------
+  const filtersEl = document.getElementById("filters");
+  function renderFilters() {
+    filtersEl.innerHTML = "";
+    CATEGORIES.forEach(cat => {
+      const btn = document.createElement("button");
+      btn.textContent = cat;
+      if (cat === activeCat) btn.classList.add("active");
+      btn.addEventListener("click", () => {
+        activeCat = cat;
+        renderFilters();
+        renderGallery();
+      });
+      filtersEl.appendChild(btn);
+    });
+  }
+
+  // ---- 4. RENDER: GALLERY GRID ------------------------------------------
+  const galleryEl = document.getElementById("gallery");
+  const rollCountEl = document.getElementById("rollCount");
+
+  function renderGallery() {
+    visible = activeCat === "All" ? IMAGES : IMAGES.filter(i => i.cat === activeCat);
+    galleryEl.innerHTML = "";
+    rollCountEl.textContent = visible.length + (visible.length === 1 ? " frame" : " frames");
+
+    if (visible.length === 0) {
+      galleryEl.innerHTML = '<p class="empty">No frames in this category yet.</p>';
+      return;
+    }
+
+    visible.forEach((img, idx) => {
+      const fig = document.createElement("figure");
+      fig.className = "tile" + (img.tall ? " tall" : "");
+      fig.innerHTML = `
+        <img src="${img.src}" alt="${img.title}" loading="lazy">
+        <figcaption class="caption">
+          <span class="t">${img.title}</span>
+          <span class="c">${img.cat}</span>
+        </figcaption>`;
+      fig.addEventListener("click", () => openLightbox(idx));
+      galleryEl.appendChild(fig);
+    });
+  }
+
+  // ---- 5. LIGHTBOX -------------------------------------------------------
+  const lb = document.getElementById("lightbox");
+  const lbImg = document.getElementById("lbImg");
+  const lbTitle = document.getElementById("lbTitle");
+  const lbCat = document.getElementById("lbCat");
+  const lbIndexEl = document.getElementById("lbIndex");
+
+  function openLightbox(idx) {
+    lightboxIndex = idx;
+    updateLightbox();
+    lb.classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+  function closeLightbox() {
+    lb.classList.remove("open");
+    document.body.style.overflow = "";
+  }
+  function updateLightbox() {
+    const img = visible[lightboxIndex];
+    lbImg.src = img.src;
+    lbImg.alt = img.title;
+    lbTitle.textContent = img.title;
+    lbCat.textContent = img.cat;
+    lbIndexEl.textContent = (lightboxIndex + 1) + " / " + visible.length;
+  }
+  function nextImage() {
+    lightboxIndex = (lightboxIndex + 1) % visible.length;
+    updateLightbox();
+  }
+  function prevImage() {
+    lightboxIndex = (lightboxIndex - 1 + visible.length) % visible.length;
+    updateLightbox();
+  }
+
+  document.getElementById("lbClose").addEventListener("click", closeLightbox);
+  document.getElementById("lbNext").addEventListener("click", nextImage);
+  document.getElementById("lbPrev").addEventListener("click", prevImage);
+
+  // click outside the image (on the dark backdrop) closes it
+  lb.addEventListener("click", (e) => { if (e.target === lb) closeLightbox(); });
+
+  // keyboard navigation
+  document.addEventListener("keydown", (e) => {
+    if (!lb.classList.contains("open")) return;
+    if (e.key === "Escape") closeLightbox();
+    if (e.key === "ArrowRight") nextImage();
+    if (e.key === "ArrowLeft") prevImage();
+  });
+
+  // ---- 6. INIT -----------------------------------------------------------
+  renderFilters();
+  renderGallery();
+</script>
+</body>
+</html>
